@@ -27,8 +27,11 @@ import java.util.List;
 @EnableWebSecurity
 public class SecurityConfig {
 
-    @Autowired private JwtFilter jwtFilter;
-    @Autowired private MyUserDetailsService myUserDetailsService;
+    @Autowired
+    private JwtFilter jwtFilter;
+
+    @Autowired
+    private MyUserDetailsService myUserDetailsService;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -36,18 +39,13 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(auth -> auth
-                        // The filter above will ignore these, but we declare them here for clarity and as a fallback.
                         .requestMatchers(
                                 "/api/register", "/api/login", "/api/forgot-password", "/api/reset-password",
                                 "/api/webhooks/**", "/images/**", "/api/orders/track/**"
                         ).permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/products/**", "/api/categories/**", "/api/pages/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/coupons/validate").permitAll()
-
-                        // Secure admin routes
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
-
-                        // All other requests must be authenticated
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -60,10 +58,16 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of("http://localhost:3000", "http://localhost:5173"));
+        config.setAllowedOrigins(List.of(
+                "http://localhost:3000",
+                "http://localhost:5173",
+                "https://snatch-it-frontend.vercel.app",
+                "https://snatch-it-frontend-mwu5hlras-ali-darwishs-projects.vercel.app"
+        ));
         config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type"));
         config.setAllowCredentials(true);
+
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
         return source;
