@@ -18,25 +18,16 @@ public class ProductController {
 
     // This is the main public endpoint for viewing products.
     @GetMapping
-    public ResponseEntity<List<ProductSummaryDTO>> getProducts(
+    public ResponseEntity<Page<ProductSummaryDTO>> getProducts(
             @RequestParam(required = false) Long categoryId,
             @RequestParam(required = false) List<String> brands,
             @RequestParam(required = false) List<String> sizes,
-            @RequestParam(required = false, defaultValue = "default") String sort) {
-        List<ProductSummaryDTO> products = productService.searchAndFilterProducts(categoryId, brands, sizes, sort);
+            @RequestParam(required = false, defaultValue = "default") String sort,
+            @RequestParam(required = false, defaultValue = "0") int page) {
+        Page<ProductSummaryDTO> products = productService.searchAndFilterProducts(categoryId, brands, sizes, sort,
+                page);
         return ResponseEntity.ok(products);
     }
-    
-    @GetMapping("/categories/{categoryId}/products")
-public ResponseEntity<List<ProductSummaryDTO>> getProductsByCategory(
-        @PathVariable Long categoryId,
-        @RequestParam(required = false) List<String> brands,
-        @RequestParam(required = false) List<String> sizes,
-        @RequestParam(required = false, defaultValue = "default") String sort) {
-    List<ProductSummaryDTO> products = productService.searchAndFilterProducts(categoryId, brands, sizes, sort);
-    return ResponseEntity.ok(products);
-}
-
 
     // This is the public endpoint for fetching a single product's details.
     @GetMapping("/{id}")

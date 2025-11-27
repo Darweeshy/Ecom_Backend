@@ -43,7 +43,8 @@ public class SecurityConfig {
                                 "/api/register", "/api/login", "/api/forgot-password", "/api/reset-password",
                                 "/api/webhooks/**", "/images/**", "/api/orders/track/**", "/error")
                         .permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/products/**", "/api/categories/**", "/api/pages/**")
+                        .requestMatchers(HttpMethod.GET, "/api/products/**", "/api/categories/**", "/api/pages/**",
+                                "/api/banners")
                         .permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/coupons/validate").permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
