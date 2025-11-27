@@ -6,6 +6,7 @@ import org.example.springecom.model.ProductSummaryDTO;
 import org.example.springecom.service.CategoryService;
 import org.example.springecom.service.ProductService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -43,12 +44,13 @@ public class CategoryController {
     }
 
     @GetMapping("/{id}/products")
-    public ResponseEntity<List<ProductSummaryDTO>> getProductsByCategory(
+    public ResponseEntity<Page<ProductSummaryDTO>> getProductsByCategory(
             @PathVariable Long id,
             @RequestParam(required = false) List<String> brands,
             @RequestParam(required = false) List<String> sizes,
-            @RequestParam(required = false, defaultValue = "default") String sort) {
-        List<ProductSummaryDTO> products = productService.searchAndFilterProducts(id, brands, sizes, sort);
+            @RequestParam(required = false, defaultValue = "default") String sort,
+            @RequestParam(required = false, defaultValue = "0") int page) {
+        Page<ProductSummaryDTO> products = productService.searchAndFilterProducts(id, brands, sizes, sort, page);
         return ResponseEntity.ok(products);
     }
 }

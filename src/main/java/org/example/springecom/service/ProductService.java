@@ -7,6 +7,9 @@ import org.example.springecom.model.ProductVariant;
 import org.example.springecom.repo.ProductRepo;
 import org.example.springecom.repo.ProductVariantRepo;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
@@ -23,14 +26,18 @@ import java.util.stream.Collectors;
 @Service
 public class ProductService {
 
-    @Autowired private ProductRepo productRepo;
-    @Autowired private ProductVariantRepo variantRepo;
-    @Autowired private FileStorageService fileStorageService;
+    @Autowired
+    private ProductRepo productRepo;
+    @Autowired
+    private ProductVariantRepo variantRepo;
+    @Autowired
+    private FileStorageService fileStorageService;
 
     private static final String PRODUCTS_SUBDIR = "products";
 
     @Transactional
-    public Product addProduct(Product product, List<ProductVariant> variants, List<MultipartFile> images) throws IOException {
+    public Product addProduct(Product product, List<ProductVariant> variants, List<MultipartFile> images)
+            throws IOException {
         product.setStockQuantity(variants.stream().mapToInt(ProductVariant::getStockQuantity).sum());
         Product savedProduct = productRepo.save(product);
 
@@ -51,7 +58,8 @@ public class ProductService {
     }
 
     @Transactional
-    public Product updateProduct(int id, Product productDetails, List<ProductVariant> variantsDetails, List<MultipartFile> newImageFiles) throws IOException {
+    public Product updateProduct(int id, Product productDetails, List<ProductVariant> variantsDetails,
+            List<MultipartFile> newImageFiles) throws IOException {
         Product product = productRepo.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Product not found with id: " + id));
 
@@ -75,7 +83,8 @@ public class ProductService {
                 variantToSave.setProduct(product);
             } else {
                 variantToSave = existingVariantsMap.remove(variantDetail.getId());
-                if (variantToSave == null) continue;
+                if (variantToSave == null)
+                    continue;
             }
 
             variantToSave.setColor(variantDetail.getColor());
@@ -107,18 +116,26 @@ public class ProductService {
     // ... other methods remain the same ...
 
     public void archiveProduct(int id) {
-        Product product = productRepo.findById(id).orElseThrow(() -> new EntityNotFoundException("Product not found with id: " + id));
+        Product product = productRepo.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Product not found with id: " + id));
         product.setArchived(true);
         product.getVariants().forEach(v -> v.setArchived(true));
         productRepo.save(product);
     }
 
     @Transactional(readOnly = true)
-    public List<ProductSummaryDTO> searchAndFilterProducts(Long categoryId, List<String> brands, List<String> sizes, String sort) {
+    public List<ProductSummaryDTO> searchAndFilterProducts(Long categoryId, List<String> brands, List<String> sizes,
+            String sort) {
         Specification<Product> spec = Specification.where(isNotArchived());
-        if (categoryId != null) { spec = spec.and(inCategory(categoryId)); }
-        if (brands != null && !brands.isEmpty()) { spec = spec.and(withBrand(brands)); }
-        if (sizes != null && !sizes.isEmpty()) { spec = spec.and(withSize(sizes)); }
+        if (categoryId != null) {
+            spec = spec.and(inCategory(categoryId));
+        }
+        if (brands != null && !brands.isEmpty()) {
+            spec = spec.and(withBrand(brands));
+        }
+        if (sizes != null && !sizes.isEmpty()) {
+            spec = spec.and(withSize(sizes));
+        }
         Sort sortOrder = switch (sort) {
             case "price-asc" -> Sort.by("variants.price").ascending();
             case "price-desc" -> Sort.by("variants.price").descending();
@@ -127,10 +144,46 @@ public class ProductService {
         return productRepo.findAll(spec, sortOrder).stream().map(ProductSummaryDTO::new).collect(Collectors.toList());
     }
 
-    private Specification<Product> isNotArchived() { return (root, query, cb) -> cb.equal(root.get("archived"), false); }
-    private Specification<Product> inCategory(Long categoryId) { return (root, query, cb) -> cb.equal(root.get("category").get("id"), categoryId); }
-    private Specification<Product> withBrand(List<String> brands) { return (root, query, cb) -> root.get("brand").in(brands); }
-    private Specification<Product> withSize(List<String> sizes) { return (root, query, cb) -> { query.distinct(true); return root.join("variants").get("size").in(sizes); }; }
+    @Transactional(readOnly = true)
+    public Page<ProductSummaryDTO> searchAndFilterProducts(Long categoryId, List<String> brands, List<String> sizes,
+            String sort, int page) {
+        Specification<Product> spec = Specification.where(isNotArchived());
+        if (categoryId != null) {
+            spec = spec.and(inCategory(categoryId));
+        }
+        if (brands != null && !brands.isEmpty()) {
+            spec = spec.and(withBrand(brands));
+        }
+        if (sizes != null && !sizes.isEmpty()) {
+            spec = spec.and(withSize(sizes));
+        }
+        Sort sortOrder = switch (sort) {
+            case "price,asc" -> Sort.by("variants.price").ascending();
+            case "price,desc" -> Sort.by("variants.price").descending();
+            default -> Sort.by("releaseDate").descending();
+        };
+        Pageable pageable = PageRequest.of(page, 12, sortOrder);
+        return productRepo.findAll(spec, pageable).map(ProductSummaryDTO::new);
+    }
+
+    private Specification<Product> isNotArchived() {
+        return (root, query, cb) -> cb.equal(root.get("archived"), false);
+    }
+
+    private Specification<Product> inCategory(Long categoryId) {
+        return (root, query, cb) -> cb.equal(root.get("category").get("id"), categoryId);
+    }
+
+    private Specification<Product> withBrand(List<String> brands) {
+        return (root, query, cb) -> root.get("brand").in(brands);
+    }
+
+    private Specification<Product> withSize(List<String> sizes) {
+        return (root, query, cb) -> {
+            query.distinct(true);
+            return root.join("variants").get("size").in(sizes);
+        };
+    }
 
     @Transactional(readOnly = true)
     public Optional<Product> getPublicProductById(int id) {
@@ -138,8 +191,16 @@ public class ProductService {
     }
 
     @Transactional(readOnly = true)
-    public List<String> getDistinctBrands() { return productRepo.findDistinctBrands(); }
+    public List<String> getDistinctBrands() {
+        return productRepo.findDistinctBrands();
+    }
+
     @Transactional(readOnly = true)
-    public List<String> getDistinctSizes() { return variantRepo.findDistinctSizes(); }
-    public List<Product> searchProducts(String keyword) { return productRepo.searchProducts(keyword); }
+    public List<String> getDistinctSizes() {
+        return variantRepo.findDistinctSizes();
+    }
+
+    public List<Product> searchProducts(String keyword) {
+        return productRepo.searchProducts(keyword);
+    }
 }
