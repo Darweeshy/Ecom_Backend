@@ -41,13 +41,13 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 "/api/register", "/api/login", "/api/forgot-password", "/api/reset-password",
-                                "/api/webhooks/**", "/images/**", "/api/orders/track/**"
-                        ).permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/products/**", "/api/categories/**", "/api/pages/**").permitAll()
+                                "/api/webhooks/**", "/images/**", "/api/orders/track/**", "/error")
+                        .permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/products/**", "/api/categories/**", "/api/pages/**")
+                        .permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/coupons/validate").permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                        .anyRequest().authenticated()
-                )
+                        .anyRequest().authenticated())
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
@@ -62,8 +62,7 @@ public class SecurityConfig {
                 "http://localhost:3000",
                 "http://localhost:5173",
                 "https://snatch-it-frontend.vercel.app",
-                "https://snatch-it-frontend-mwu5hlras-ali-darwishs-projects.vercel.app"
-        ));
+                "https://snatch-it-frontend-mwu5hlras-ali-darwishs-projects.vercel.app"));
         config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type"));
         config.setAllowCredentials(true);
