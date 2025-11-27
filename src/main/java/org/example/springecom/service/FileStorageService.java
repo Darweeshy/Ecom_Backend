@@ -20,8 +20,10 @@ public class FileStorageService {
 
     /**
      * Saves a file to a specified subdirectory within the root upload directory.
-     * @param file The MultipartFile to save.
-     * @param subdirectory The name of the subdirectory (e.g., "products" or "categories").
+     * 
+     * @param file         The MultipartFile to save.
+     * @param subdirectory The name of the subdirectory (e.g., "products" or
+     *                     "categories").
      * @return The unique filename of the saved file.
      * @throws IOException if the file is empty or cannot be saved.
      */
@@ -51,5 +53,9 @@ public class FileStorageService {
         }
 
         return uniqueFilename;
+    }
+
+    public String getUploadDir() {
+        return rootUploadDir;
     }
 }
