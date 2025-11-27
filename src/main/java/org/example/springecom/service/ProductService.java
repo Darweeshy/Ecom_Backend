@@ -102,6 +102,7 @@ public class ProductService {
                 // Preserve existing imageUrl if no new file uploaded (e.g., from media library)
                 variantToSave.setImageUrl(variantDetail.getImageUrl());
             }
+            processedVariants.add(variantToSave);
         }
 
         product.getVariants().clear();
