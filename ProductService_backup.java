@@ -92,16 +92,14 @@ public class ProductService {
             variantToSave.setPrice(variantDetail.getPrice());
             variantToSave.setStockQuantity(variantDetail.getStockQuantity());
 
-            if (newImageFiles != null && newImageCounter < newImageFiles.size()) {
+            if (isNewVariant && newImageFiles != null && newImageCounter < newImageFiles.size()) {
                 MultipartFile image = newImageFiles.get(newImageCounter++);
                 if (image != null && !image.isEmpty()) {
                     String filename = fileStorageService.saveFile(image, PRODUCTS_SUBDIR);
                     variantToSave.setImageUrl("/images/" + PRODUCTS_SUBDIR + "/" + filename);
                 }
-            } else if (variantDetail.getImageUrl() != null) {
-                // Preserve existing imageUrl if no new file uploaded (e.g., from media library)
-                variantToSave.setImageUrl(variantDetail.getImageUrl());
-            }            processedVariants.add(variantToSave);
+            }
+            processedVariants.add(variantToSave);
         }
 
         product.getVariants().clear();
