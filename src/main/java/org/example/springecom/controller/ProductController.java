@@ -1,5 +1,7 @@
 package org.example.springecom.controller;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.example.springecom.model.Product;
 import org.example.springecom.model.ProductSummaryDTO;
 import org.example.springecom.service.ProductService;
