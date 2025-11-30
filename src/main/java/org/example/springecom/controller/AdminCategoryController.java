@@ -11,12 +11,14 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/admin/categories")
 public class AdminCategoryController {
 
-    @Autowired private CategoryService categoryService;
+    @Autowired
+    private CategoryService categoryService;
 
     @GetMapping
     public ResponseEntity<List<AdminCategoryDTO>> getCategoryTreeForAdmin() {
@@ -28,6 +30,21 @@ public class AdminCategoryController {
         return ResponseEntity.ok(categoryService.getAdminCategoryFlatList());
     }
 
+    // DEBUG: Check if any categories exist at all
+    @GetMapping("/debug/count")
+    public ResponseEntity<Map<String, Object>> debugCategoryCount() {
+        List<Category> allCategories = categoryService.getAllCategoriesForDebug();
+        return ResponseEntity.ok(Map.of(
+                "totalCount", allCategories.size(),
+                "categories", allCategories.stream()
+                        .map(c -> Map.of(
+                                "id", c.getId(),
+                                "name", c.getName(),
+                                "archived", c.isArchived(),
+                                "parentId", c.getParent() != null ? c.getParent().getId() : "NULL"))
+                        .toList()));
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<Category> getCategoryByIdForAdmin(@PathVariable Long id) {
         return ResponseEntity.ok(categoryService.getCategoryByIdForAdmin(id));
@@ -37,7 +54,8 @@ public class AdminCategoryController {
     public ResponseEntity<Category> createCategory(
             @RequestPart("category") String categoryStr,
             @RequestPart(value = "image", required = false) MultipartFile image) throws IOException {
-        return new ResponseEntity<>(categoryService.createOrUpdateCategory(null, categoryStr, image), HttpStatus.CREATED);
+        return new ResponseEntity<>(categoryService.createOrUpdateCategory(null, categoryStr, image),
+                HttpStatus.CREATED);
     }
 
     @PutMapping("/{id}")
