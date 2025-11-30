@@ -22,6 +22,21 @@ public class UserService {
     private EmailService emailService;
 
     public User saveUser(User user) {
+        // Duplicate checks
+        if (repo.findByUsername(user.getUsername()) != null) {
+            throw new IllegalArgumentException("Username already exists");
+        }
+        if (repo.findByEmail(user.getEmail()) != null) {
+            throw new IllegalArgumentException("Email already registered");
+        }
+
+        // Password strength validation
+        String password = user.getPassword();
+        if (password == null || !password.matches("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).{8,}$")) {
+            throw new IllegalArgumentException(
+                    "Password must be at least 8 characters, include uppercase, lowercase, and a number");
+        }
+
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         user.setRole("ROLE_USER");
         User savedUser = repo.save(user);

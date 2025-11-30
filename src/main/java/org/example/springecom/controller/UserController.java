@@ -22,29 +22,37 @@ import java.util.Map;
 @RequestMapping("/api")
 public class UserController {
 
-    @Autowired private UserService service;
-    @Autowired private JwtService jwtService;
-    @Autowired private AuthenticationManager authenticationManager;
+    @Autowired
+    private UserService service;
+    @Autowired
+    private JwtService jwtService;
+    @Autowired
+    private AuthenticationManager authenticationManager;
 
     @PostMapping("/register")
-    public User register(@RequestBody User user) {
-        return service.saveUser(user);
+    public ResponseEntity<?> register(@RequestBody User user) {
+        try {
+            return ResponseEntity.ok(service.saveUser(user));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody User user){
+    public ResponseEntity<?> login(@RequestBody User user) {
         // FIX: Added try-catch to handle bad credentials gracefully.
         try {
             Authentication authentication = authenticationManager
                     .authenticate(new UsernamePasswordAuthenticationToken(user.getUsername(), user.getPassword()));
 
-            if(authentication.isAuthenticated()) {
+            if (authentication.isAuthenticated()) {
                 String token = jwtService.generateToken(user.getUsername());
                 String role = service.getUserByUsername(user.getUsername()).getRole();
                 return ResponseEntity.ok(new LoginResponse(token, role));
             }
         } catch (BadCredentialsException e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "Invalid username or password"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("message", "Invalid username or password"));
         }
         return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
     }
@@ -53,7 +61,8 @@ public class UserController {
     public ResponseEntity<Map<String, String>> forgotPassword(@RequestBody Map<String, String> payload) {
         String email = payload.get("email");
         service.generatePasswordResetToken(email);
-        return ResponseEntity.ok(Map.of("message", "If an account with that email exists, a reset link has been sent."));
+        return ResponseEntity
+                .ok(Map.of("message", "If an account with that email exists, a reset link has been sent."));
     }
 
     @PostMapping("/reset-password")
