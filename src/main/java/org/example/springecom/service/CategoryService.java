@@ -20,9 +20,12 @@ import java.util.stream.Collectors;
 @Service
 public class CategoryService {
 
-    @Autowired private CategoryRepo categoryRepo;
-    @Autowired private FileStorageService fileStorageService;
-    @Autowired private ObjectMapper objectMapper;
+    @Autowired
+    private CategoryRepo categoryRepo;
+    @Autowired
+    private FileStorageService fileStorageService;
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @Transactional
     public Category createOrUpdateCategory(Long id, String categoryStr, MultipartFile image) throws IOException {
@@ -62,6 +65,11 @@ public class CategoryService {
     @Transactional(readOnly = true)
     public List<Category> getTopLevelCategories() {
         return categoryRepo.findTopLevelActiveCategories();
+    }
+
+    @Transactional(readOnly = true)
+    public List<Category> getAllCategoriesForDebug() {
+        return categoryRepo.findAll();
     }
 
     @Transactional(readOnly = true)

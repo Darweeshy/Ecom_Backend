@@ -11,6 +11,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/categories")
@@ -34,6 +36,20 @@ public class CategoryController {
     @GetMapping("/toplevel")
     public ResponseEntity<List<Category>> getTopLevelCategories() {
         return new ResponseEntity<>(categoryService.getTopLevelCategories(), HttpStatus.OK);
+    }
+
+    // DEBUG: Temporary endpoint to check all categories and their status
+    @GetMapping("/debug/all")
+    public ResponseEntity<List<Map<String, Object>>> debugAllCategories() {
+        List<Category> allCategories = categoryService.getAllCategoriesForDebug();
+        List<Map<String, Object>> debugInfo = allCategories.stream()
+                .map(c -> Map.of(
+                        "id", c.getId(),
+                        "name", c.getName(),
+                        "archived", c.isArchived(),
+                        "parentId", c.getParent() != null ? c.getParent().getId() : "NULL"))
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(debugInfo);
     }
 
     // FIX: This endpoint now uses the dedicated public service method.
